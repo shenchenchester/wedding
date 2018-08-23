@@ -53,7 +53,58 @@
 	<script src="https://code.createjs.com/createjs-2015.11.26.min.js"></script>
 	<script src="logo_final.js"></script>
 	<script>
-		var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+		var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation, isForward, autoPlay;
+		function scrollToY(scrollTargetY, speed, easing) {
+			// scrollTargetY: the target scrollY property of the window
+			// speed: time in pixels per second
+			// easing: easing equation to use
+
+			var scrollY = window.scrollY,
+				scrollTargetY = scrollTargetY || 0,
+				speed = speed || 2000,
+				easing = easing || 'easeOutSine',
+				currentTime = 0;
+
+			// min time .1, max time .8 seconds
+			var time = Math.max(.1, Math.min(Math.abs(scrollY - scrollTargetY) / speed, .8));
+
+			// easing equations from https://github.com/danro/easing-js/blob/master/easing.js
+			var PI_D2 = Math.PI / 2,
+				easingEquations = {
+					easeOutSine: function (pos) {
+						return Math.sin(pos * (Math.PI / 2));
+					},
+					easeInOutSine: function (pos) {
+						return (-0.5 * (Math.cos(Math.PI * pos) - 1));
+					},
+					easeInOutQuint: function (pos) {
+						if ((pos /= 0.5) < 1) {
+							return 0.5 * Math.pow(pos, 5);
+						}
+						return 0.5 * (Math.pow((pos - 2), 5) + 2);
+					}
+				};
+
+			// add animation loop
+			function tick() {
+				currentTime += 1 / 60;
+
+				var p = currentTime / time;
+				var t = easingEquations[easing](p);
+
+				if (p < 1) {
+					window.requestAnimationFrame(tick);
+
+					window.scrollTo(0, scrollY + ((scrollTargetY - scrollY) * t));
+				} else {
+					console.log('scroll done');
+					window.scrollTo(0, scrollTargetY);
+				}
+			}
+
+			// call it once to get started
+			tick();
+		}
 
 		function init() {
 			canvas = document.getElementById("canvas");
@@ -68,43 +119,54 @@
 			//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
 			var lib = comp.getLibrary();
 			var ss = comp.getSpriteSheet();
+			isForward = true;
+			autoPlay = true;
 			exportRoot = new lib.logo_final();
 			stage = new lib.Stage(canvas);
 			//Registers the "tick" event listener.
 			fnStartAnimation = function () {
 				stage.addChild(exportRoot);
 				createjs.Ticker.setFPS(lib.properties.fps);
-				createjs.Ticker.addEventListener("tick", stage);
-			}
-
-			function playReverse() {
-				if (createjs.Ticker.hasEventListener("tick")) {
-					createjs.Ticker.removeAllEventListeners();
-				}
 				createjs.Ticker.addEventListener("tick", playR.bind(this));
 			}
 
 			function playR(e) {
-				this.gotoAndStop(this.currentFrame - 1);
-				if (this.currentFrame == 0) {
-					createjs.Ticker.removeAllEventListeners();
+				if (!autoPlay) {
+					stage.update();
+					return;
+				}
+				var nextFrame = exportRoot.currentFrame + (isForward ? 1 : -1);
+				exportRoot.gotoAndStop(nextFrame);
+				console.log("current frame and next", exportRoot.currentFrame, nextFrame)
+				if (nextFrame >= exportRoot.totalFrames) {
+					isForward = false;
+				}
+				if (exportRoot.currentFrame == 0 && !isForward) {
+					autoPlay = false;
+					stage.stop()
 				}
 				stage.update();
 			}
 			var seekOnScroll = function (event) {
 				// var frame = parseInt( 1000 - window.scrollY  * 2);
-				var frame = parseInt(window.scrollY * 2);
+				var maxScrollY = document.getElementById('photo').height - window.innerHeight * 0.1
+				console.log("max scroll offset", maxScrollY)
+				var frame = parseInt(window.scrollY / (maxScrollY - 50) * 1000);
 				stage.seek(frame);
-				var alpha = 1 - window.scrollY / 500;
+				var alpha = 1 - 1.4 * window.scrollY / maxScrollY;
 				alpha = alpha > 0 ? alpha : 0;
 				var container = document.getElementById("message_container")
 				container.style.opacity = alpha;
-				var top = 65 - window.scrollY / 25
+				var top = 60 - window.scrollY / 25
 				container.style.top = top.toString() + '%'
-				console.log("scrolling frame", frame, alpha, top);
+				console.log("scrolling frame", window.scrollY, frame, alpha, top);
 			}
 
-			window.addEventListener('scroll', seekOnScroll)
+			window.addEventListener('scroll', seekOnScroll);
+			window.addEventListener('touchend', function (event) {
+				console.log("touch ended");
+				scrollToY(0, 800, 'easeInOutQuint');
+			}, false);
 			//Code to support hidpi screens and responsive scaling.
 			function makeResponsive(isResp, respDim, isScale, scaleType) {
 				var lastW, lastH, lastS = 1;
@@ -149,7 +211,6 @@
 			makeResponsive(true, 'both', true, 1);
 			AdobeAn.compositionLoaded(lib.properties.id);
 			fnStartAnimation();
-			stage.setAutoPlay(false);
 		}
 	</script>
 	<!-- write your code here -->
@@ -161,7 +222,7 @@
 		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:400px; height:200px; left: 0px; top: 0px;  position: absolute; display: block;">
 		</div>
 	</div>
-	<div id="message_container" style="position: fixed; top: 65%; left: 0; right: 0; bottom: 0">
+	<div id="message_container" style="position: fixed; top: 60%; left: 0; right: 0; bottom: 0">
 		<p class="medium_text centered" style="margin: 0px auto 60px auto">
 			<span>沈忱</span>
 			<span class="background">爱着</span>
@@ -176,11 +237,10 @@
 		<p class="large_text centered" style="margin: 90px auto 0px auto">
 			敬备薄宴
 			<br>恭请光临
+			<br>
 		</p>
 	</div>
-	<div>
-		<img src="2.png" style="width: 100%; position: absolute; top: 90%">
-	</div>
+	<img id="photo" src="2.png" style="width: 100%; position: absolute; top: 90%">
 </body>
 
 </html>
