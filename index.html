@@ -12,6 +12,8 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="authoring-tool" content="Adobe_Animate_CC">
+	<meta itemprop="image" content="https://avatars1.githubusercontent.com/u/3135642?s=40&v=4" />
+ 	<meta name="description" itemprop="description" content="邀请您参加婚礼"" />
 	<title>婚礼邀请函</title>
 	<!-- write your code here -->
 	<style>
@@ -150,7 +152,6 @@
 			var seekOnScroll = function (event) {
 				// var frame = parseInt( 1000 - window.scrollY  * 2);
 				var maxScrollY = document.getElementById('photo').height - window.innerHeight * 0.1
-				console.log("max scroll offset", maxScrollY)
 				var frame = parseInt(window.scrollY / (maxScrollY - 50) * 1000);
 				stage.seek(frame);
 				var alpha = 1 - 1.4 * window.scrollY / maxScrollY;
@@ -240,7 +241,7 @@
 			<br>
 		</p>
 	</div>
-	<img id="photo" src="2.png" style="width: 100%; position: absolute; top: 90%">
+	<img id="photo" src="3.png" style="width: 100%; position: absolute; top: 90%">
 </body>
 
 </html>
