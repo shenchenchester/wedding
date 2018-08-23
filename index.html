@@ -160,13 +160,13 @@
 				// var frame = parseInt( 1000 - window.scrollY  * 2);
 				var maxScrollY = document.getElementById('photo').height - window.innerHeight * 0.1
 				var frame = parseInt(window.scrollY / (maxScrollY - 50) * 1000);
-				stage.seek(frame);
 				var alpha = 1 - 1.4 * window.scrollY / maxScrollY;
 				alpha = alpha > 0 ? alpha : 0;
 				var container = document.getElementById("message_container")
 				container.style.opacity = alpha;
-				var top = 60 - window.scrollY / 25
+				var top = 60 - window.scrollY / 25.0
 				container.style.top = top.toString() + '%'
+				stage.seek(frame);
 				console.log("scrolling frame", window.scrollY, frame, alpha, top);
 			}
 
